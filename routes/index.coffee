@@ -4,7 +4,9 @@ User = models.User
 exports.reserveSpot = (req, res) ->
     User.create (user) ->
         user.getRank (rank) ->
-            res.json {id: user.id, rank: rank, list: user.list}
+            waiting = true
+            if user.list is User.GRANTED_LIST_KEY then waiting = false
+            res.json {id: user.id, rank: rank, waiting: waiting}
 
 exports.checkSpot = (req, res) ->
     User.get req.param('id'), (user) ->
@@ -12,7 +14,9 @@ exports.checkSpot = (req, res) ->
             res.json 404, {error: 'User does not exist.'}
         else
             user.getRank (rank) ->
-                res.json {id: user.id, rank: rank, list: user.list}
+                waiting = true
+                if user.list is User.GRANTED_LIST_KEY then waiting = false
+                res.json {id: user.id, rank: rank, waiting: waiting}
 
 exports.openSesame = (req, res) ->
     spots = Number req.param('spots')
