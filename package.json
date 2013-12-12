@@ -1,0 +1,16 @@
+{
+  "name": "wAPIt",
+  "description": "Waiting list as a service.",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "start": "node-dev app.coffee"
+  },
+  "dependencies": {
+    "coffee-script": "latest",
+    "express": "3.0.0beta7",
+    "redis": "~0.9.1",
+    "hiredis": "~0.1.15",
+    "q": "~0.9.7"
+  }
+}
