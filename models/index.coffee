@@ -30,7 +30,6 @@ class User
         Q.ninvoke(client, 'zrevrange', User.WAITING_LIST_KEY, 0, spots - 1).then (members) ->
             members ?= []
             multi = client.multi()
-            console.log members
             if members.length > 0
                 multi.zrem User.WAITING_LIST_KEY, members...
                 multi.sadd User.GRANTED_LIST_KEY, members...
@@ -64,8 +63,6 @@ class User
         counterPromise = Q.ninvoke(client, 'incr', 'counter')
         idPromise = Q.nfcall(crypto.randomBytes, User.ID_SIZE).then (buf) ->
             Q.resolve(buf.toString 'hex')
-
-        counterPromise.fail (err) -> console.log err
 
         Q.all([counterPromise, idPromise]).then ([spot, id]) ->
             score = 1 / spot
