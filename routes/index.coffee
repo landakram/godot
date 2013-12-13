@@ -18,6 +18,15 @@ exports.checkSpot = (req, res) ->
                 if user.list is User.GRANTED_LIST_KEY then waiting = false
                 res.json {id: user.id, rank: rank, waiting: waiting}
 
+exports.setEmail = (req, res) ->
+    email = req.param('email')
+    User.get req.param('id'), (user) ->
+        if not user
+            res.json 404, {error: 'User does not exist.'}
+        else
+            user.setEmail email, ->
+                res.json {sucess: true}
+
 exports.openSesame = (req, res) ->
     spots = Number req.param('spots')
     apiKey = req.param('apiKey')

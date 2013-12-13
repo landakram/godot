@@ -12,15 +12,24 @@ class User
         @id = options.id
         @score = options.score
         @list = options.list
-        @info = options.info
+        @info = options.info or {}
+
+    saveInfo: (callback) ->
+        infoList = []
+        infoList.push(key) and infoList.push(@info[key]) for own key of @info
+        Q.ninvoke(client, 'hset', "user:#{@id}", infoList...).then(callback).done()
+
+    setEmail: (email, callback) ->
+        @info.email = email
+        @saveInfo callback
 
     getRank: (callback) ->
         if @rank
-            callback @rank
+            if callback then callback @rank
         else
             client.zrevrank User.WAITING_LIST_KEY, @id, (err, val) ->
                 @rank = val
-                callback @rank
+                if callback then callback @rank
 
     @dequeue: (spots, callback) ->
         # Unfortunately, there is no way to atomically remove and return
@@ -37,7 +46,7 @@ class User
             else
                 [members]
         .spread (members) ->
-            callback members
+            if callback then callback members
         .done()
 
     @get: (id, callback) ->
@@ -56,7 +65,7 @@ class User
             else if score
                 user.list = User.WAITING_LIST_KEY
                 user.score = Number score
-            callback user
+            if callback then callback user
         .done()
 
     @create: (callback) ->
@@ -71,7 +80,7 @@ class User
              #Q.ninvoke(client, 'hset', "user:#{id}", 'status', 'waiting'),
              Q.ninvoke(client, 'zadd', User.WAITING_LIST_KEY, score, id)]
         .spread (id, score) ->
-            callback(new User {id: id, score: score, list: User.WAITING_LIST_KEY})
+            if callback then callback(new User {id: id, score: score, list: User.WAITING_LIST_KEY})
         .done()
 
 exports.User = User
