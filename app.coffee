@@ -19,12 +19,13 @@ app.configure ->
 app.configure 'development', ->
     app.use express.errorHandler()
 
-app.get '/u/reserve', routes.reserveSpot
+app.post '/u/reserve', routes.reserveSpot
 app.post '/u/email/set', routes.setEmail
 app.get '/u/check', routes.checkSpot
 
 app.post '/r/create', routes.getReferralLink
 app.get '/r/:referralID', routes.trackReferral
+
 
 app.post '/open/sesame', routes.openSesame
 
