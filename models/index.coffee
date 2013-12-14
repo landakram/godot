@@ -96,18 +96,26 @@ class User
             if callback then callback user
         .done()
 
-    @create: (callback) ->
+    @create: (waiting, callback) ->
         counterPromise = Q.ninvoke(client, 'incr', 'counter')
         idPromise = Q.nfcall(crypto.randomBytes, User.ID_SIZE).then (buf) ->
             Q.resolve(buf.toString 'hex')
 
-        Q.all([counterPromise, idPromise]).then ([spot, id]) ->
-            score = 1 / spot
-            [id,
-             score,
-             Q.ninvoke(client, 'zadd', User.WAITING_LIST_KEY, score, id)]
+        list = null
+        Q.all([counterPromise, idPromise]).spread (spot, id) ->
+            enqueuePromise = null
+            score = null
+            if waiting is true
+                list = User.WAITING_LIST_KEY
+                score = 1 / spot
+                enqueuePromise = Q.ninvoke(client, 'zadd', list, score, id)
+            else
+                list = User.GRANTED_LIST_KEY
+                enqueuePromise = Q.ninvoke(client, 'sadd', list, id)
+            [id, score, enqueuePromise]
         .spread (id, score) ->
-            if callback then callback(new User {id: id, score: score, list: User.WAITING_LIST_KEY})
+            if callback then callback(new User {id: id, score: score, list: list})
         .done()
 
 exports.User = User
+exports.client = client
