@@ -37,6 +37,9 @@ app.post '/r/create', routes.getReferralLink
 app.get '/r/:referralID', routes.trackReferral
 
 # Invitations
+app.post '/i/create', routes.getInviteLink
+app.get '/i/:inviteID', routes.trackInvite
+app.post '/i/add', routes.incrementInvites
 
 # Admin
 app.post '/a/toggle', routes.toggleWaitingList

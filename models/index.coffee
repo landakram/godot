@@ -25,6 +25,13 @@ class User
         @info.email = email
         @saveInfo callback
 
+    incrementInvites: (byAmount, callback) ->
+        if typeof @info.invites is 'string'
+            @info.invites = Number @info.invites
+        @info.invites ?= 0
+        @info.invites += byAmount
+        @saveInfo callback
+
     incrementScore: (byAmount, callback) ->
         if @list is User.WAITING_LIST_KEY
             client.zincrby @list, byAmount, @id, (err, val) =>
@@ -54,6 +61,18 @@ class User
                 [@saveInfo, Q.ninvoke(client, 'set', "referral:#{@info.referralID}", @id)]
             .spread =>
                 callback @info.referralID
+            .done()
+
+    getInviteID: (callback) ->
+        if @info.inviteID
+            if callback then callback @info.inviteID
+        else
+            Q.nfcall(crypto.randomBytes, User.ID_SIZE).then (buf) =>
+                @info.inviteID = buf.toString 'hex'
+                [@saveInfo, Q.ninvoke(client, 'set', "invite:#{@info.inviteID}", @id)]
+            .spread =>
+                callback @info.inviteID
+            .done()
 
     @dequeue: (spots, callback) ->
         # Unfortunately, there is no way to atomically remove and return
@@ -75,6 +94,10 @@ class User
 
     @getByReferralID: (referralID, callback) ->
         Q.ninvoke(client, 'get', "referral:#{referralID}").then (id) ->
+            User.get id, callback
+
+    @getByInviteID: (inviteID, callback) ->
+        Q.ninvoke(client, 'get', "invite:#{inviteID}").then (id) ->
             User.get id, callback
 
     @get: (id, callback) ->
