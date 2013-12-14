@@ -42,7 +42,7 @@ exports.setEmail = (req, res) ->
             res.json 404, {error: 'User does not exist.'}
         else
             user.setEmail email, ->
-                res.json {sucess: true}
+                res.json {success: true}
 
 
 
