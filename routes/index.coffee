@@ -6,24 +6,59 @@ User = models.User
 
 exports.reserveSpot = (req, res) ->
     referralID = req.session.referrer
-    referralDeferred = Q.defer()
-    if referralID
-        User.getByReferralID referralID, (referringUser) ->
-            referralDeferred.resolve(referringUser)
-            if referringUser then referringUser.redeemReferral()
+    referDeferred = Q.defer()
+    inviteID = req.session.inviter
+    inviteDeferred = Q.defer()
+    if inviteID?
+        User.getByInviteID inviteID, (invitingUser) ->
+            # Only count the invite if the inviting user has invites left
+            if invitingUser? and invitingUser.info.invites > 0
+                invitingUser.incrementInvites -1
+                inviteDeferred.resolve(invitingUser)
+            else
+                inviteDeferred.resolve {error: 'expired'}
     else
-        referralDeferred.resolve()
+        inviteDeferred.resolve()
+
+    if referralID?
+        inviteDeferred.promise.then (invitingUser) ->
+            # If the user was invited, then we don't worry about referrals
+            if invitingUser? and not invitingUser.error
+                referDeferred.resolve()
+            # Otherwise, do the referral stuff
+            else
+                User.getByReferralID referralID, (referringUser) ->
+                    referDeferred.resolve(referringUser)
+                    if referringUser then referringUser.redeemReferral()
+        .done()
+    else
+        referDeferred.resolve()
+
+    createUserAndSendResponse = (waiting) ->
+        User.create waiting, (user) ->
+            user.getRank (rank) ->
+                Q.all([inviteDeferred.promise, referDeferred.promise]).spread (invitingUser, referringUser) ->
+                    user.info.referredBy = referralID if referringUser?
+                    user.info.invitedBy = inviteID if invitingUser? and not invitingUser.error
+                    user.saveInfo()
+                    req.session.id = user.id
+                    req.session.referrer = null
+                    res.json {
+                        id: user.id, rank: rank, waiting: waiting,
+                        referred: true if referringUser?,
+                        invited: true if invitingUser? and not invitingUser.error,
+                        error: invitingUser.error if invitingUser?
+                    }
+                .done()
 
     waiting = req.app.get('enabled')
-    User.create waiting, (user) ->
-        user.getRank (rank) ->
-            referralDeferred.promise.then (referringUser) ->
-                if referringUser then user.info.referredBy = referralID
-                user.saveInfo()
-                req.session.id = user.id
-                req.session.referrer = null
-                res.json {id: user.id, rank: rank, waiting: waiting, referred: true if referralID?}
-            .done()
+    if not waiting
+        createUserAndSendResponse(waiting)
+    else
+        inviteDeferred.promise.then (invitingUser) ->
+            waiting = false if invitingUser? and not invitingUser.error
+            createUserAndSendResponse(waiting)
+        .done()
 
 exports.checkSpot = (req, res) ->
     User.get req.param('id'), (user) ->
@@ -58,6 +93,28 @@ exports.getReferralLink = (req, res) ->
 exports.trackReferral = (req, res) ->
     req.session.referrer = req.params.referralID
     res.redirect req.app.get('externalRedirectURL')
+
+
+exports.getInviteLink = (req, res) ->
+    User.get req.param('id'), (user) ->
+        if not user
+            res.json 404, {error: 'User does not exist.'}
+        else
+            user.getInviteID (inviteID) ->
+                inviteLink = absoluteUrlForPath req, "/i/#{inviteID}"
+                res.json {inviteLink: inviteLink}
+
+exports.trackInvite = (req, res) ->
+    req.session.inviter = req.params.inviteID
+    res.redirect req.app.get('externalRedirectURL')
+
+exports.incrementInvites = (req, res) ->
+    User.get req.param('id'), (user) ->
+        if not user
+            res.json 404, {error: 'User does not exist.'}
+        else
+            user.incrementInvites 1, ->
+                res.json {invites: user.info.invites}
 
 exports.toggleWaitingList = (req, res) ->
     apiKey = req.param('apiKey')
