@@ -1,5 +1,6 @@
 Q = require 'q'
 models = require '../models'
+utils = require '../utils'
 User = models.User
 
 exports.reserveSpot = (req, res) ->
@@ -35,7 +36,18 @@ exports.reserveSpot = (req, res) ->
     createUserAndSendResponse = (waiting) ->
         User.create waiting, (user) ->
             user.getRank (rank) ->
-                Q.all([inviteDeferred.promise, referDeferred.promise]).spread (invitingUser, referringUser) ->
+                refLinkDeferred = Q.defer()
+                inviteLinkDeferred = Q.defer()
+                user.getReferralID (referralID) ->
+                    referralLink = utils.absoluteUrlForPath req, "/r/#{referralID}"
+                    refLinkDeferred.resolve(referralLink)
+                user.getInviteID (inviteID) ->
+                    inviteLink = utils.absoluteUrlForPath req, "/i/#{inviteID}"
+                    inviteLinkDeferred.resolve(inviteLink)
+
+                Q.all([inviteDeferred.promise, referDeferred.promise,
+                       refLinkDeferred.promise, inviteLinkDeferred.promise])
+                .spread (invitingUser, referringUser, referralLink, inviteLink) ->
                     user.info.referredBy = referralID if referringUser?
                     user.info.invitedBy = inviteID if invitingUser? and not invitingUser.error
                     user.saveInfo()
@@ -43,6 +55,8 @@ exports.reserveSpot = (req, res) ->
                     req.session.referrer = null
                     res.json {
                         id: user.id, rank: rank, waiting: waiting,
+                        referralLink: referralLink,
+                        inviteLink: inviteLink,
                         referred: true if referringUser?,
                         invited: true if invitingUser? and not invitingUser.error,
                         error: invitingUser.error if invitingUser?
