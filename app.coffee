@@ -6,25 +6,33 @@ client = require('./models').client
 app = express()
 
 app.configure ->
-    app.set "port", process.env.PORT or 4000
-    app.set 'apiKey', process.env.API_KEY or '4747'
-    app.set 'externalRedirectURL', process.env.EXTERNAL_REDIRECT_URL or 'http://www.google.com'
+    app.set "port", process.env.PORT
+    app.set 'apiKey', process.env.API_KEY
+    app.set 'redirectURL', process.env.REDIRECT_URL
+    app.set 'appName', process.env.APP_NAME
+    app.set 'emailAddress', process.env.EMAIL_ADDRESS
     # Configure enabled from redis, then env, or just start enabled
     client.hget 'config', 'enabled', (err, val) ->
         if val?
             enabled = val is 'true'
             app.set 'enabled', enabled
         else
-            app.set 'enabled', process.env.ENABLED or true
+            app.set 'enabled', process.env.ENABLED or false
     app.use express.favicon()
     app.use express.logger('dev')
     app.use express.bodyParser()
     app.use express.methodOverride()
-    app.use express.cookieParser(process.env.SECRET or 'secret')
+    app.use express.cookieParser(process.env.SECRET)
     app.use express.cookieSession()
     app.use app.router
 
 app.configure 'development', ->
+    app.set 'apiKey', process.env.API_KEY or '4747'
+    app.set "port", process.env.PORT or 4000
+    app.set 'redirectURL', process.env.REDIRECT_URL or 'http://www.google.com'
+    app.set 'appName', process.env.APP_NAME or 'Development app'
+    app.set 'emailAddress', process.env.EMAIL_ADDRESS or 'dev@example.org'
+    app.use express.cookieParser(process.env.SECRET or 'secret')
     app.use express.errorHandler()
 
 # User
