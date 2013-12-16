@@ -24,5 +24,6 @@ exports.incrementInvites = (req, res) ->
             res.json 404, {error: 'User does not exist.'}
         else
             user.incrementInvites 1, ->
-                res.json {invites: user.info.invites}
+                waiting = req.app.get('enabled')
+                res.json {invites: user.info.invites, waiting: waiting}
 
