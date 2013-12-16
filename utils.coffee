@@ -7,4 +7,6 @@ exports.absoluteUrlForPath = (req, path) ->
         port: req.app.settings.port,
         pathname: path
     }
+    if process.env.NODE_ENV is 'production'
+        absoluteUrl.host = req.host
     url.format absoluteUrl
