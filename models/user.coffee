@@ -55,11 +55,8 @@ class User
                 if callback then callback @rank
 
     getReferralLink: (req, callback) ->
-        console.log 'getReferralLink'
         @getReferralID (referralID) =>
-            console.log "getReferralID: #{referralID}"
             referralLink = utils.absoluteUrlForPath req, "/r/#{referralID}"
-            console.log "getReferralID: #{referralLink}"
             utils.shortenUrl referralLink, (err, link) =>
                 if err?
                     callback err
