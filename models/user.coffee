@@ -103,6 +103,7 @@ class User
 
     @get: (id, callback) ->
         user = new User {id: id}
+        userDeferred = Q.defer()
         grantedPromise = Q.ninvoke(client, 'sismember', User.GRANTED_LIST_KEY, id)
         scorePromise = Q.ninvoke(client, 'zscore', User.WAITING_LIST_KEY, id)
         infoPromise = Q.ninvoke(client, 'hgetall', "user:#{id}")
@@ -117,8 +118,11 @@ class User
             else if score
                 user.list = User.WAITING_LIST_KEY
                 user.score = Number score
+
             if callback then callback user
+            userDeferred.resolve user
         .done()
+        userDeferred.promise
 
     @create: (waiting, callback) ->
         counterPromise = Q.ninvoke(client, 'incr', 'counter')

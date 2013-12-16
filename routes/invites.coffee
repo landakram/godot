@@ -14,7 +14,7 @@ exports.getInviteLink = (req, res) ->
 
 exports.trackInvite = (req, res) ->
     req.session.inviter = req.params.inviteID
-    res.redirect req.app.get('externalRedirectURL')
+    res.redirect req.app.get('redirectURL')
 
 exports.incrementInvites = (req, res) ->
     User.get req.param('id'), (user) ->

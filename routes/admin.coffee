@@ -1,4 +1,5 @@
 Q = require 'q'
+postmark = require 'postmark', process.env.POSTMARK_API_KEY
 models = require '../models'
 client = models.client
 User = models.User
@@ -43,3 +44,18 @@ exports.openSesame = (req, res) ->
     else
         User.dequeue spots, (members) ->
             res.json {dequeued: members}
+            sendReadyEmails members, req
+
+sendReadyEmails = (userIDs, req) ->
+    userPromises = (User.get userID for userID in userIDs)
+    Q.all(userPromises).then (users) ->
+        messages = (composeEmail user, req for user in users when user? and user.info.email?)
+        postmark.batch messages, (err, success) ->
+            if err? then console.log "Errors sending emails: #{err}"
+            if success? then console.log "Sucesses sending emails: #{success}"
+
+composeEmail = (user, req) ->
+    From: req.app.get 'emailAddress'
+    To: user.info.email
+    Subject: "#{req.app.get 'appName'} is ready for you."
+    TextBody: 'Here is a text body.'

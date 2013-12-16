@@ -8,7 +8,9 @@ app = express()
 app.configure ->
     app.set "port", process.env.PORT
     app.set 'apiKey', process.env.API_KEY
-    app.set 'externalRedirectURL', process.env.EXTERNAL_REDIRECT_URL
+    app.set 'redirectURL', process.env.REDIRECT_URL
+    app.set 'appName', process.env.APP_NAME
+    app.set 'emailAddress', process.env.EMAIL_ADDRESS
     # Configure enabled from redis, then env, or just start enabled
     client.hget 'config', 'enabled', (err, val) ->
         if val?
@@ -27,7 +29,9 @@ app.configure ->
 app.configure 'development', ->
     app.set 'apiKey', process.env.API_KEY or '4747'
     app.set "port", process.env.PORT or 4000
-    app.set 'externalRedirectURL', process.env.EXTERNAL_REDIRECT_URL or 'http://www.google.com'
+    app.set 'redirectURL', process.env.REDIRECT_URL or 'http://www.google.com'
+    app.set 'appName', process.env.APP_NAME or 'Development app'
+    app.set 'emailAddress', process.env.EMAIL_ADDRESS or 'dev@example.org'
     app.use express.cookieParser(process.env.SECRET or 'secret')
     app.use express.errorHandler()
 

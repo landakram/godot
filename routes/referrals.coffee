@@ -14,6 +14,4 @@ exports.getReferralLink = (req, res) ->
 
 exports.trackReferral = (req, res) ->
     req.session.referrer = req.params.referralID
-    res.redirect req.app.get('externalRedirectURL')
-
-
+    res.redirect req.app.get('redirectURL')
