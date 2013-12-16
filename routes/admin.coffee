@@ -1,5 +1,5 @@
 Q = require 'q'
-postmark = require 'postmark', process.env.POSTMARK_API_KEY
+postmark = require('postmark')(process.env.POSTMARK_API_KEY)
 models = require '../models'
 client = models.client
 User = models.User
