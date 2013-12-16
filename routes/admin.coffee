@@ -52,7 +52,7 @@ sendReadyEmails = (userIDs, req) ->
         messages = (composeEmail user, req for user in users when user? and user.info.email?)
         postmark.batch messages, (err, success) ->
             if err? then console.log "Errors sending emails: #{err}"
-            if success? then console.log "Sucesses sending emails: #{success}"
+            if success? then console.log "Successes sending emails: #{success}"
 
 composeEmail = (user, req) ->
     From: req.app.get 'emailAddress'

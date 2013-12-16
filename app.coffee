@@ -22,7 +22,7 @@ app.configure ->
     app.use express.logger('dev')
     app.use express.bodyParser()
     app.use express.methodOverride()
-    app.use express.cookieParser(process.env.SECRET)
+    app.use express.cookieParser(process.env.SECRET or 'secret')
     app.use express.cookieSession()
     app.use app.router
 
