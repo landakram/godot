@@ -8,9 +8,11 @@ exports.getReferralLink = (req, res) ->
         if not user
             res.json 404, {error: 'User does not exist.'}
         else
-            user.getReferralID (referralID) ->
-                referralLink = utils.absoluteUrlForPath req, "/r/#{referralID}"
-                res.json {referralLink: referralLink}
+            user.getReferralLink req, (err, link) ->
+                if err
+                    res.json {error: err}
+                else
+                    res.json {referralLink: link}
 
 exports.trackReferral = (req, res) ->
     req.session.referrer = req.params.referralID

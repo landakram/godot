@@ -8,9 +8,11 @@ exports.getInviteLink = (req, res) ->
         if not user
             res.json 404, {error: 'User does not exist.'}
         else
-            user.getInviteID (inviteID) ->
-                inviteLink = utils.absoluteUrlForPath req, "/i/#{inviteID}"
-                res.json {inviteLink: inviteLink}
+            user.getInviteLink req, (err, link) ->
+                if err
+                    res.json {error: err}
+                else
+                    res.json {inviteLink: link}
 
 exports.trackInvite = (req, res) ->
     req.session.inviter = req.params.inviteID

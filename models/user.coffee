@@ -3,6 +3,7 @@ client = models.client
 
 Q = require 'q'
 crypto = require('crypto')
+utils = require '../utils'
 
 class User
     @ID_SIZE: 4
@@ -53,6 +54,20 @@ class User
                 @rank = val
                 if callback then callback @rank
 
+    getReferralLink: (req, callback) ->
+        console.log 'getReferralLink'
+        @getReferralID (referralID) =>
+            console.log "getReferralID: #{referralID}"
+            referralLink = utils.absoluteUrlForPath req, "/r/#{referralID}"
+            console.log "getReferralID: #{referralLink}"
+            utils.shortenUrl referralLink, (err, link) =>
+                if err?
+                    callback err
+                else if link?
+                    @info.shortReferralLink = link
+                    @saveInfo()
+                    callback null, link
+
     getReferralID: (callback) ->
         if @info.referralID
             if callback then callback @info.referralID
@@ -63,6 +78,17 @@ class User
             .spread =>
                 callback @info.referralID
             .done()
+
+    getInviteLink: (req, callback) ->
+        @getInviteID (inviteID) =>
+            inviteLink = utils.absoluteUrlForPath req, "/i/#{inviteID}"
+            utils.shortenUrl inviteLink, (err, link) =>
+                if err?
+                    callback err
+                else if link?
+                    @info.shortInviteLink = link
+                    @saveInfo()
+                    callback null, link
 
     getInviteID: (callback) ->
         if @info.inviteID

@@ -38,12 +38,10 @@ exports.reserveSpot = (req, res) ->
             user.getRank (rank) ->
                 refLinkDeferred = Q.defer()
                 inviteLinkDeferred = Q.defer()
-                user.getReferralID (referralID) ->
-                    referralLink = utils.absoluteUrlForPath req, "/r/#{referralID}"
-                    refLinkDeferred.resolve(referralLink)
-                user.getInviteID (inviteID) ->
-                    inviteLink = utils.absoluteUrlForPath req, "/i/#{inviteID}"
-                    inviteLinkDeferred.resolve(inviteLink)
+                user.getReferralLink req, (err, link) ->
+                    if err? then refLinkDeferred.reject(err) else refLinkDeferred.resolve(link)
+                user.getInviteLink req, (err, link) ->
+                    if err? then inviteLinkDeferred.reject(err) else inviteLinkDeferred.resolve(link)
 
                 Q.all([inviteDeferred.promise, referDeferred.promise,
                        refLinkDeferred.promise, inviteLinkDeferred.promise])
