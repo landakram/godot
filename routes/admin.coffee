@@ -53,9 +53,10 @@ sendReadyEmails = (userIDs, req) ->
     Q.all(userPromises).then (users) ->
         waitingListSizePromise.then (size) ->
             messages = (composeEmail user, size, req for user in users when user? and user.info.email?)
-            postmark.batch messages, (err, success) ->
-                if err? then console.log "Errors sending emails: #{err}"
-                if success? then console.log "Successes sending emails: #{success}"
+            if messages.length > 0
+                postmark.batch messages, (err, success) ->
+                    if err? then console.log "Errors sending emails: #{err}"
+                    if success? then console.log "Successes sending emails: #{success}"
 
 composeEmail = (user, waitingListSize, req) ->
     appName = process.env.APP_NAME

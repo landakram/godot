@@ -52,6 +52,7 @@ exports.reserveSpot = (req, res) ->
                 .spread (invitingUser, referringUser, referralLink, inviteLink) ->
                     user.info.referredBy = referralID if referringUser?
                     user.info.invitedBy = inviteID if invitingUser? and not invitingUser.error
+                    user.info.invites = 3
                     user.saveInfo()
                     req.session.id = user.id
                     req.session.referrer = null
