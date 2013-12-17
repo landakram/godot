@@ -35,14 +35,18 @@ exports.reserveSpot = (req, res) ->
 
     createUserAndSendResponse = (waiting) ->
         User.create waiting, (user) ->
-            user.getRank (rank) ->
-                refLinkDeferred = Q.defer()
-                inviteLinkDeferred = Q.defer()
-                user.getReferralLink req, (err, link) ->
-                    if err? then refLinkDeferred.reject(err) else refLinkDeferred.resolve(link)
-                user.getInviteLink req, (err, link) ->
-                    if err? then inviteLinkDeferred.reject(err) else inviteLinkDeferred.resolve(link)
+            refLinkDeferred = Q.defer()
+            inviteLinkDeferred = Q.defer()
 
+            # Generate referral and invite links
+            user.getReferralLink req, (err, link) ->
+                if err? then refLinkDeferred.reject(err) else refLinkDeferred.resolve(link)
+            user.getInviteLink req, (err, link) ->
+                if err? then inviteLinkDeferred.reject(err) else inviteLinkDeferred.resolve(link)
+
+            # Calculate the user's position the waiting list
+            user.getRank (rank) ->
+                # When everything is loaded, return the user
                 Q.all([inviteDeferred.promise, referDeferred.promise,
                        refLinkDeferred.promise, inviteLinkDeferred.promise])
                 .spread (invitingUser, referringUser, referralLink, inviteLink) ->
@@ -53,6 +57,7 @@ exports.reserveSpot = (req, res) ->
                     req.session.referrer = null
                     res.json {
                         id: user.id, rank: rank, waiting: waiting,
+                        projectedSharingRank: user.projectedSharingRank,
                         referralLink: referralLink,
                         inviteLink: inviteLink,
                         referred: true if referringUser?,
@@ -78,7 +83,12 @@ exports.checkSpot = (req, res) ->
             user.getRank (rank) ->
                 waiting = true
                 if user.list is User.GRANTED_LIST_KEY then waiting = false
-                res.json {id: user.id, rank: rank, waiting: waiting}
+                res.json {
+                    id: user.id,
+                    rank: rank,
+                    waiting: waiting,
+                    projectedSharingRank: user.projectedSharingRank
+                }
 
 exports.setEmail = (req, res) ->
     email = req.param('email')

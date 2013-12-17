@@ -47,12 +47,28 @@ class User
         @incrementScore 1, => (@saveInfo -> callback)
 
     getRank: (callback) ->
-        if @rank
+        if @rank and @projectedSharingRank
             if callback then callback @rank
         else
-            client.zrevrank User.WAITING_LIST_KEY, @id, (err, val) ->
+            client.zrevrank User.WAITING_LIST_KEY, @id, (err, val) =>
                 @rank = val
-                if callback then callback @rank
+                @getProjectedSharingRank().then =>
+                    if callback then callback @rank
+
+    getProjectedSharingRank: (callback) ->
+        rankDeferred = Q.defer()
+        closestMemberPromise = Q.ninvoke client, 'zrevrangebyscore', User.WAITING_LIST_KEY, @score + 1, Number.NEGATIVE_INFINITY, 'limit', 0, 1
+        closestMemberPromise.then (members) =>
+            closestMember = members[0]
+            if closestMember
+                client.zrevrank User.WAITING_LIST_KEY, closestMember, (err, val) =>
+                    @projectedSharingRank = val
+                    rankDeferred.resolve val
+                    if callback then callback val
+            else
+                rankDeferred.resolve null
+                if callback then callback val
+        rankDeferred.promise
 
     getReferralLink: (req, callback) ->
         @getReferralID (referralID) =>
