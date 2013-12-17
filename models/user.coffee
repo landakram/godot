@@ -34,6 +34,10 @@ class User
         @info.invites += byAmount
         @saveInfo callback
 
+    clearInvites: (callback) ->
+        @info.invites = 0
+        @saveInfo callback
+
     incrementScore: (byAmount, callback) ->
         if @list is User.WAITING_LIST_KEY
             client.zincrby @list, byAmount, @id, (err, val) =>

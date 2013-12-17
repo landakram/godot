@@ -27,3 +27,11 @@ exports.incrementInvites = (req, res) ->
                 waiting = req.app.get('enabled')
                 res.json {invites: user.info.invites, waiting: waiting}
 
+exports.clearInvites = (req, res) ->
+    User.get req.param('id'), (user) ->
+        if not user
+            res.json 404, {error: 'User does not exist.'}
+        else
+            user.clearInvites ->
+                waiting = req.app.get('enabled')
+                res.json {invites: user.info.invites, waiting: waiting}
