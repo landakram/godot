@@ -35,6 +35,8 @@ exports.reserveSpot = (req, res) ->
 
     createUserAndSendResponse = (waiting) ->
         User.create waiting, (user) ->
+            lengthPromise = User.waitingListLength()
+
             refLinkDeferred = Q.defer()
             inviteLinkDeferred = Q.defer()
 
@@ -56,7 +58,8 @@ exports.reserveSpot = (req, res) ->
                     user.saveInfo()
                     req.session.id = user.id
                     req.session.referrer = null
-                    res.json {
+
+                    data = {
                         id: user.id, rank: rank, waiting: waiting,
                         projectedSharingRank: user.projectedSharingRank,
                         referralLink: referralLink,
@@ -65,6 +68,13 @@ exports.reserveSpot = (req, res) ->
                         invited: true if invitingUser? and not invitingUser.error,
                         error: invitingUser.error if invitingUser?
                     }
+                    if waiting
+                        lengthPromise.then (length) ->
+                            data.waitingListLength = length
+                            res.json data
+                    else
+                        res.json data
+
                 .done()
 
     waiting = req.app.get('enabled')
@@ -77,6 +87,7 @@ exports.reserveSpot = (req, res) ->
         .done()
 
 exports.checkSpot = (req, res) ->
+    lengthPromise = User.waitingListLength()
     User.get req.param('id'), (user) ->
         if not user
             res.json 404, {error: 'User does not exist.'}
@@ -84,12 +95,20 @@ exports.checkSpot = (req, res) ->
             user.getRank (rank) ->
                 waiting = true
                 if user.list is User.GRANTED_LIST_KEY then waiting = false
-                res.json {
+                data = {
                     id: user.id,
                     rank: rank,
                     waiting: waiting,
                     projectedSharingRank: user.projectedSharingRank
                 }
+                if waiting
+                    lengthPromise.then (length) ->
+                        data.waitingListLength = length
+                        res.json data
+                    .done()
+                else
+                    res.json data
+                
 
 exports.setEmail = (req, res) ->
     email = req.param('email')

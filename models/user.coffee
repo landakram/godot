@@ -194,4 +194,10 @@ class User
             if callback then callback(new User {id: id, score: score, list: list})
         .done()
 
+    @waitingListLength: (callback) ->
+        lengthPromise = Q.ninvoke client, 'zcard', User.WAITING_LIST_KEY
+        lengthPromise.then (val) -> if callback then callback null, val
+        lengthPromise.fail (err) -> if callback then callback err
+        lengthPromise
+
 exports.User = User
