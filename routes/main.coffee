@@ -58,6 +58,7 @@ exports.reserveSpot = (req, res) ->
                     user.saveInfo()
                     req.session.id = user.id
                     req.session.referrer = null
+                    req.session.inviter = null
 
                     data = {
                         id: user.id, rank: rank, waiting: waiting,
