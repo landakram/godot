@@ -58,6 +58,7 @@ class User
                 @rank = val
                 @getProjectedSharingRank().then =>
                     if callback then callback @rank
+                .done()
 
     getProjectedSharingRank: (callback) ->
         rankDeferred = Q.defer()
