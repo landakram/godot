@@ -64,7 +64,7 @@ composeEmail = (user, waitingListSize, req) ->
     From: req.app.get 'emailAddress'
     To: user.info.email
     Subject: "We're ready for you!"
-    HtmlBody: _.template(templateString, {redirectUrl: (req.app.get 'redirectURL'), tweetText: tweetText, appName: appName})
+    HtmlBody: _.template(templateString, {redirectUrl: "#{(req.app.get 'redirectURL')}?startwt=true", tweetText: tweetText, appName: appName})
 
 templateString = "
 <p>You're in!</p>
