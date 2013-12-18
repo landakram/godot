@@ -39,6 +39,10 @@ exports.clearInvites = (req, res) ->
         if not user
             res.json 404, {error: 'User does not exist.'}
         else
-            user.clearInvites ->
-                waiting = req.app.get('enabled')
+            waiting = req.app.get('enabled')
+            if user.info.invitedBy? and user.info.invitedBy is process.env.MASTER_USER
                 res.json {invites: user.info.invites, waiting: waiting}
+            else
+                user.clearInvites ->
+                    res.json {invites: user.info.invites, waiting: waiting}
+

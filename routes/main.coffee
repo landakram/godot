@@ -52,8 +52,8 @@ exports.reserveSpot = (req, res) ->
                 Q.all([inviteDeferred.promise, referDeferred.promise,
                        refLinkDeferred.promise, inviteLinkDeferred.promise])
                 .spread (invitingUser, referringUser, referralLink, inviteLink) ->
-                    user.info.referredBy = referralID if referringUser?
-                    user.info.invitedBy = inviteID if invitingUser? and not invitingUser.error
+                    user.info.referredBy = referringUser.id if referringUser?
+                    user.info.invitedBy = invitingUser.id if invitingUser? and not invitingUser.error
                     user.info.invites = 3
                     user.saveInfo()
                     req.session.id = user.id
