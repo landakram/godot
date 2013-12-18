@@ -19,13 +19,20 @@ exports.trackInvite = (req, res) ->
     res.redirect req.app.get('redirectURL')
 
 exports.incrementInvites = (req, res) ->
+    lengthPromise = User.waitingListLength()
     User.get req.param('id'), (user) ->
         if not user
             res.json 404, {error: 'User does not exist.'}
         else
             user.incrementInvites 1, ->
                 waiting = req.app.get('enabled')
-                res.json {invites: user.info.invites, waiting: waiting}
+                data = {invites: user.info.invites, waiting: waiting}
+                if waiting
+                    lengthPromise.then (length) ->
+                        data.waitingListLength = length
+                        res.json data
+                else
+                    res.json data
 
 exports.clearInvites = (req, res) ->
     User.get req.param('id'), (user) ->
