@@ -126,6 +126,13 @@ class User
                 callback @info.inviteID
             .done()
 
+    dequeue: (callback) ->
+        multi = client.multi()
+        multi.zrem User.WAITING_LIST_KEY, @id
+        multi.sadd User.GRANTED_LIST_KEY, @id
+        multi.exec (err, val) =>
+            if callback then callback val
+
     @dequeue: (spots, callback) ->
         # Unfortunately, there is no way to atomically remove and return
         # members of a redis sorted set. I suppose this is close enough.
@@ -149,8 +156,12 @@ class User
             User.get id, callback
 
     @getByInviteID: (inviteID, callback) ->
+        deferred = Q.defer()
         Q.ninvoke(client, 'get', "invite:#{inviteID}").then (id) ->
-            User.get id, callback
+            User.get id, (user) =>
+                deferred.resolve user
+                if callback then callback user
+        deferred.promise
 
     @get: (id, callback) ->
         user = new User {id: id}

@@ -15,8 +15,21 @@ exports.getInviteLink = (req, res) ->
                     res.json {inviteLink: link}
 
 exports.trackInvite = (req, res) ->
+    existingID = req.session.id
     req.session.inviter = req.params.inviteID
-    res.redirect req.app.get('redirectURL')
+    if existingID
+        invitingPromise = User.getByInviteID req.params.inviteID
+        userPromise = User.get existingID
+        Q.all([invitingPromise, userPromise]).spread (invitingUser, user) ->
+            if user? and invitingUser? and (user.id isnt invitingUser.id)
+                user.dequeue ->
+                    req.session.inviter = null
+                    res.redirect req.app.get('redirectURL')
+            else
+                res.redirect req.app.get('redirectURL')
+        .done()
+    else
+        res.redirect req.app.get('redirectURL')
 
 exports.incrementInvites = (req, res) ->
     lengthPromise = User.waitingListLength()
