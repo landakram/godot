@@ -83,6 +83,7 @@ class User
     getReferralLink: (req, callback) ->
         @getReferralID (referralID) =>
             referralLink = utils.absoluteUrlForPath req, "/r/#{referralID}"
+            @info.referralLink = referralLink
             utils.shortenUrl referralLink, (err, link) =>
                 if err?
                     callback err
@@ -105,6 +106,7 @@ class User
     getInviteLink: (req, callback) ->
         @getInviteID (inviteID) =>
             inviteLink = utils.absoluteUrlForPath req, "/i/#{inviteID}"
+            @info.inviteLink = inviteLink
             utils.shortenUrl inviteLink, (err, link) =>
                 if err?
                     callback err

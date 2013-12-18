@@ -63,7 +63,9 @@ exports.reserveSpot = (req, res) ->
                         id: user.id, rank: rank, waiting: waiting,
                         projectedSharingRank: user.projectedSharingRank,
                         referralLink: referralLink,
+                        longReferralLink: user.info.referralLink,
                         inviteLink: inviteLink,
+                        longInviteLink: user.info.inviteLink,
                         referred: true if referringUser?,
                         invited: true if invitingUser? and not invitingUser.error,
                         error: invitingUser.error if invitingUser?
